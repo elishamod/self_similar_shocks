@@ -5,9 +5,9 @@ from os import mkdir
 
 n = 2
 gamma = 5./3.
-omega = 6.0
-lmb = -1.63588
-reflection = False
+omega = 2.1
+lmb = 0.810136
+reflection = True
 
 plot_bv = False
 plot_profiles = False

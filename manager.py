@@ -51,21 +51,21 @@ def CU_diagram(C, U, C1=0, U1=0):
 
 
 start_time = time.time()
-print 'hi'
+print('hi')
 
 C, U = semi_analytical.solve_given_d(True, False, n, omega, gamma, d)
-print len(C)
-print 'Finished type II part 1'
+print(len(C))
+print('Finished type II part 1')
 C1, U1 = [], []
 #C1, U1 = semi_analytical.solve_downwards(True, False, n, omega, gamma, d, 1e-8)
 C = [x for x in reversed(C)]
 U = [x for x in reversed(U)]
 C2 = C + C1
 U2 = U + U1
-print len(C)
-print 'Finished type II part 2'
-print 'delta = ' + str(d)
-print str(time.time() - start_time) + ' sec'
+print(len(C))
+print('Finished type II part 2')
+print('delta = ' + str(d))
+print(str(time.time() - start_time) + ' sec')
 CU_diagram(C2, U2)
 
 # C3, U3 = sonic_singular_point.semi_analytical(diverging, n, omega, gamma, 0.0, 1e-8)

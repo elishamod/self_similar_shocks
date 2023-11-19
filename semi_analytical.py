@@ -92,7 +92,7 @@ def solve(n, omega, gamma, d_eps=1e-6, rk_eps=1e-5):
 def solve_for_xi(U, C, n, omega, gamma, d, xi0=1.0):
     dzdc = lambda uw, cw: (cw**2 - (1-uw)**2) / delta2(uw, cw, n, omega, gamma, d)
     z = [np.log(xi0)]
-    for j in xrange(1, len(U)):
+    for j in range(1, len(U)):
         dC = C[j] - C[j - 1]
         z.append(z[-1] + dC * 0.5 * (dzdc(U[j], C[j]) + dzdc(U[j - 1], C[j - 1])))
     xi = [np.exp(zt) for zt in z]
@@ -102,7 +102,7 @@ def solve_for_xi(U, C, n, omega, gamma, d, xi0=1.0):
 def solve_for_zeta(U, C, n, omega, gamma, d, zeta0=0.0):
     dzdc = lambda uw, cw: (cw**2 - (1-uw)**2) / delta2(uw, cw, n, omega, gamma, d)
     z = [zeta0]
-    for j in xrange(1, len(U)):
+    for j in range(1, len(U)):
         dC = C[j] - C[j - 1]
         z.append(z[-1] + dC * 0.5 * (dzdc(U[j], C[j]) + dzdc(U[j - 1], C[j - 1])))
     return z

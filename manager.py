@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import semi_analytical
-import hydro_sim
-import sonic_singular_point
+# import hydro_sim
+# import sonic_singular_point
 import time
 
 show_type1 = False

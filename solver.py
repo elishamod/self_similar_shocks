@@ -3,17 +3,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 from utils import get_parser, init_styled_plot, finish_styled_plot
 import lazarus_aux as lz
-gap_coefficients = {0: 0, 1: 0.5905, 2: 1.5148}
+from collections import namedtuple
+PhysicalParams = namedtuple('PhysicalParams', ['omega', 'gamma', 'n', 's'])
 
 
 def main():
-    omega, gamma, s, n = read_input()
-    sol = solve_given_lambda(omega, gamma, s, n, lambda_initial_guess(omega, gamma, s, n))
-    plot_CU_diagram([sol])
+    params = read_input()
+    lmb_guess = lambda_initial_guess(params)
+    sol = solve_given_lambda(params, lmb_guess)
+    plot_CU_diagram([sol], params=params, lmb=lmb_guess)
 
 
-def lambda_initial_guess(omega: float, gamma: float, s: int, n: int) -> float:
+def lambda_initial_guess(params: PhysicalParams) -> float:
     """Using the analytical approximation from https://doi.org/10.1063/5.0047518"""
+    gap_coefficients = {0: 0, 1: 0.5905, 2: 1.5148}
+    omega, gamma, s, n = params.omega, params.gamma, params.s, params.n
     if s > 0:  # Diverging shock
         if n in gap_coefficients.keys():
             gap_coefficient = gap_coefficients[n]
@@ -42,21 +46,39 @@ def lambda_initial_guess(omega: float, gamma: float, s: int, n: int) -> float:
         raise Exception("s should be either 1 or -1. s = 0 is meaningless.")
 
 
-def solve_given_lambda(omega, gamma, s, n, lmb):
-    x, y = lz.solve1(n, gamma, lmb, omega, prec1=1e-4, x_end=1e1, prec2=1e-7, switch=(s * lmb < 0))
+def solve_given_lambda(params: PhysicalParams, lmb):
+    x, y = lz.solve1(params.n, params.gamma, lmb, params.omega,
+                     prec1=1e-4, x_end=1e1, prec2=1e-7, switch=(params.s * lmb < 0))
     V = [y[i][0] for i in range(len(x))]
     C = [y[i][1] for i in range(len(x))]
     x, V, C = np.array(x), np.array(V), np.array(C)
     return x, V, C
 
 
-def plot_CU_diagram(solutions, gamma=None, s=None, n=None):
+def plot_CU_diagram(solutions, params: PhysicalParams, lmb=None):
+    omega, gamma, s, n = params.omega, params.gamma, params.s, params.n
     init_styled_plot()
-    fig, ax = plt.subplots(1 , 1)
+    fig, ax = plt.subplots(1, 1)
+    vvv = np.linspace(-1.0, 0.0, 10)
+    ax.plot(-vvv, 1 + vvv, label='Sonic line', color='C1')
     for x, V, C in solutions:
-        ax.plot(C, -V)
+        ax.plot(-V, C, label='Solution')
+    V_shock, C_shock = -2 / (gamma + 1), np.sqrt(2 * gamma * (gamma - 1)) / (gamma + 1)
+    ax.plot(-V_shock, C_shock, 'rx', markersize=8, label='Strong shock')
+    if lmb is not None:
+        if n == 0:
+            Cs = gamma * (1 - lmb) / (omega + (gamma - 2) * (1 - lmb))
+        else:
+            h = 0.5 - (omega + (gamma - 2) * (1 - lmb)) / (2 * n * gamma)
+            Cs = h + np.array([1, -1]) * np.sqrt(h ** 2 + (1 - lmb) / n)
+        ax.plot(1 - Cs, Cs, 'g*', markersize=8, label='Singular point')
     ax.set_xlabel('C')
     ax.set_ylabel('U')
+    gamma_str = str(gamma)
+    if gamma == 5. / 3.:
+        gamma_str = '5/3'
+    ttl = rf's={s}, n={n}, $\gamma$={gamma_str}, $\omega$={omega}, $\lambda$={lmb}'
+    plt.title(ttl)
     finish_styled_plot()
     plt.show()
 
@@ -72,7 +94,7 @@ def read_input():
     ap.add_argument('-n', type=int, default=0, metavar='geometry',
                     help='n = 0 - plane, n = 1 - cylinder, n = 2 - sphere')
     args = ap.parse_args()
-    return args.omega, args.gamma, args.s, args.n
+    return PhysicalParams(omega=args.omega, gamma=args.gamma, s=args.s, n=args.n)
 
 
 if __name__ == '__main__':

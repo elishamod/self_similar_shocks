@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import lazarus_aux as lz
 from os import mkdir
+from utils import init_styled_plot, finish_styled_plot
 
 n = 2
 gamma = 5./3.
@@ -17,6 +18,8 @@ save_results = False
 # x, y = lz.solve1(n, gamma, lmb, omega, prec1=1e-3, x_end=1e2, prec2=1e-7, switch=reflection)
 # x, y = lz.solve1(n, gamma, lmb, omega, prec1=1e-4, x_end=0.92184, prec2=1e-7, switch=reflection)
 x, y = lz.solve1(n, gamma, lmb, omega, prec1=1e-4, x_end=3.9298, prec2=1e-7, switch=reflection)
+
+init_styled_plot()
 
 V = [y[i][0] for i in range(len(x))]
 C = [y[i][1] for i in range(len(x))]
@@ -100,7 +103,7 @@ plt.grid(True)
 plt.ylim(0, 1)
 plt.xlim(0, 1)
 # plt.legend()
-fig1.tight_layout()
+finish_styled_plot()
 plt.show()
 
 if plot_profiles:

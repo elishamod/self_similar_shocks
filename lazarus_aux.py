@@ -1,5 +1,6 @@
 import numpy as np
 import rk_solve as rk
+from collections.abc import Iterable
 
 
 def D(V, C):
@@ -96,19 +97,33 @@ def solve_from_sonic(n, gamma, lmb, omega=0.0, x_plus=0.5, prec=1e-7, max_n=1000
     foo = lambda xw, yw: func(yw, xw, lmb, n, gamma, omega)
     Um1, Cm1 = 2. / (gamma + 1), np.sqrt(2 * gamma * (gamma - 1)) / (gamma + 1)
     aux = 3 - lmb + (omega + 2 * (lmb - 1)) / gamma
-    Us = 0.25 * (aux - np.sqrt(aux ** 2 - 8 * (omega + 2 * (lmb - 1)) / gamma))
-    Cs = 1 - Us
+    # Us = 0.25 * (aux - np.sqrt(aux ** 2 - 8 * (omega + 2 * (lmb - 1)) / gamma))
+    # Cs = 1 - Us
+    Cs = sonic_point_C(n, gamma, lmb, omega)
+    if isinstance(Cs, Iterable):
+        Cs = Cs[-1]
+    Us = 1 - Cs
     A1 = ((omega + 2 * (lmb - 1)) / gamma - 3 * Us) * 2 * Cs
     B1 = -3 * Cs ** 2 + 3 * Us ** 2 - 2 * (lmb + 1) * Us + lmb
     aux = (2 * (lmb - 1) - (gamma - 1) * omega) / (2 * gamma)
     A2 = -2 * Cs ** 2 - 0.5 * n * (gamma - 1) * Us * Cs + (lmb - 1) * (0.5 * (gamma - 3) * Us + 1) - 3 * Cs * aux
     B2 = (-2 * Cs - 0.5 * n * (gamma - 1) * (1 - 2 * Us) + (lmb - 1) * (gamma - 3) / 2 - aux) * Cs
     dUdC = (B1 - A2 + np.sqrt((A2 - B1) ** 2 + 4 * A1 * B2)) / (2 * B2)
+    dUdC = -dUdC        # dubious...
 
     dC = 1e-6
     x_start = -1.0
-    x, y = rk.rk4(foo, x_start, x_start + x_plus, np.array([-Us-dUdC*dC, Cs+dC]), prec, max_n=max_n)
-    x2, y2 = rk.rk4(foo, -x_start, -x_start + 1e1, np.array([-Us+dUdC*dC, Cs-dC]), prec, max_n=max_n)
+    x, y = rk.rk4(foo, x_start + x_plus, x_start, np.array([-Us-dUdC*dC, Cs+dC]), prec, max_n=max_n)
+    x2, y2 = rk.rk4(foo, -x_start + 1e1, -x_start, np.array([-Us+dUdC*dC, Cs-dC]), prec, max_n=max_n)
     x = np.array([z for z in reversed(x)] + list(x2))
     y = np.array([z for z in reversed(y)] + list(y2))
     return x, y
+
+
+def sonic_point_C(n, gamma, lmb, omega=0.0):
+    if n == 0:
+        Cs = gamma * (1 - lmb) / (omega + (gamma - 2) * (1 - lmb))
+    else:
+        h = 0.5 - (omega + (gamma - 2) * (1 - lmb)) / (2 * n * gamma)
+        Cs = h + np.array([1, -1]) * np.sqrt(h ** 2 + (1 - lmb) / n)
+    return Cs

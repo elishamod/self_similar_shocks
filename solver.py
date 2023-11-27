@@ -47,8 +47,9 @@ def lambda_initial_guess(params: PhysicalParams) -> float:
 
 
 def solve_given_lambda(params: PhysicalParams, lmb):
-    x, y = lz.solve1(params.n, params.gamma, lmb, params.omega,
-                     prec1=1e-4, x_end=1e1, prec2=1e-7, switch=(params.s * lmb < 0))
+    # x, y = lz.solve1(params.n, params.gamma, lmb, params.omega,
+    #                  prec1=1e-4, x_end=1e1, prec2=1e-7, switch=(params.s * lmb < 0))
+    x, y = lz.solve_from_sonic(params.n, params.gamma, lmb, params.omega)
     V = [y[i][0] for i in range(len(x))]
     C = [y[i][1] for i in range(len(x))]
     x, V, C = np.array(x), np.array(V), np.array(C)
@@ -66,11 +67,7 @@ def plot_CU_diagram(solutions, params: PhysicalParams, lmb=None):
     V_shock, C_shock = -2 / (gamma + 1), np.sqrt(2 * gamma * (gamma - 1)) / (gamma + 1)
     ax.plot(-V_shock, C_shock, 'rx', markersize=8, label='Strong shock')
     if lmb is not None:
-        if n == 0:
-            Cs = gamma * (1 - lmb) / (omega + (gamma - 2) * (1 - lmb))
-        else:
-            h = 0.5 - (omega + (gamma - 2) * (1 - lmb)) / (2 * n * gamma)
-            Cs = h + np.array([1, -1]) * np.sqrt(h ** 2 + (1 - lmb) / n)
+        Cs = lz.sonic_point_C(n=n, gamma=gamma, lmb=lmb, omega=omega)
         ax.plot(1 - Cs, Cs, 'g*', markersize=8, label='Singular point')
     ax.set_xlabel('C')
     ax.set_ylabel('U')

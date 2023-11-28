@@ -93,7 +93,7 @@ def solve_eta(gamma, eta, x_end=1e4, prec1=1e-4, prec2=1e-6, switch=True):
         return x, y
 
 
-def solve_from_sonic(n, gamma, lmb, omega=0.0, x_plus=0.5, prec=1e-7, max_n=1000):
+def solve_from_sonic(n, gamma, lmb, omega=0.0, s=-1, x_plus=0.5, prec=1e-7, max_n=1000):
     foo = lambda xw, yw: func(yw, xw, lmb, n, gamma, omega)
     Um1, Cm1 = 2. / (gamma + 1), np.sqrt(2 * gamma * (gamma - 1)) / (gamma + 1)
     aux = 3 - lmb + (omega + 2 * (lmb - 1)) / gamma
@@ -110,13 +110,17 @@ def solve_from_sonic(n, gamma, lmb, omega=0.0, x_plus=0.5, prec=1e-7, max_n=1000
     B2 = (-2 * Cs - 0.5 * n * (gamma - 1) * (1 - 2 * Us) + (lmb - 1) * (gamma - 3) / 2 - aux) * Cs
     dUdC = (B1 - A2 + np.sqrt((A2 - B1) ** 2 + 4 * A1 * B2)) / (2 * B2)
     dUdC = -dUdC        # dubious...
-
     dC = 1e-6
-    x_start = -1.0
-    x, y = rk.rk4(foo, x_start + x_plus, x_start, np.array([-Us-dUdC*dC, Cs+dC]), prec, max_n=max_n)
-    x2, y2 = rk.rk4(foo, -x_start + 1e1, -x_start, np.array([-Us+dUdC*dC, Cs-dC]), prec, max_n=max_n)
-    x = np.array([z for z in reversed(x)] + list(x2))
-    y = np.array([z for z in reversed(y)] + list(y2))
+
+    # x_start = -1.0
+    # x, y = rk.rk4(foo, x_start + x_plus, x_start, np.array([-Us-dUdC*dC, Cs+dC]), prec, max_n=max_n)
+    # x2, y2 = rk.rk4(foo, -x_start + 1e1, -x_start, np.array([-Us+dUdC*dC, Cs-dC]), prec, max_n=max_n)
+    # x = np.array([z for z in reversed(x)] + list(x2))
+    # y = np.array([z for z in reversed(y)] + list(y2))
+
+    x_start = 1.0 * np.sign(lmb * s)
+    x_end = x_start * 1e1 ** np.sign(-lmb * s)
+    x, y = rk.rk4(foo, x_start, x_end, np.array([-Us - dUdC * dC, Cs + dC]), prec, max_n=max_n)
     return x, y
 
 

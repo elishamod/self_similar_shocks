@@ -8,10 +8,13 @@ PhysicalParams = namedtuple('PhysicalParams', ['omega', 'gamma', 'n', 's'])
 
 
 def main():
-    params = read_input()
+    params, profile_plot_flag = read_input()
     lmb_guess = lambda_initial_guess(params)
     sol = solve_given_lambda(params, lmb_guess)
-    plot_CU_diagram([sol], params=params, lmb=lmb_guess)
+    plot_CU_diagram([sol], params=params, lmb=lmb_guess, show=False)
+    if profile_plot_flag:
+        profile_plot([sol], params=params, lmb=lmb_guess, show=False)
+    plt.show()
 
 
 def lambda_initial_guess(params: PhysicalParams) -> float:
@@ -49,14 +52,29 @@ def lambda_initial_guess(params: PhysicalParams) -> float:
 def solve_given_lambda(params: PhysicalParams, lmb):
     # x, y = lz.solve1(params.n, params.gamma, lmb, params.omega,
     #                  prec1=1e-4, x_end=1e1, prec2=1e-7, switch=(params.s * lmb < 0))
-    x, y = lz.solve_from_sonic(params.n, params.gamma, lmb, params.omega)
+    x, y = lz.solve_from_sonic(params.n, params.gamma, lmb, params.omega, params.s)
     V = [y[i][0] for i in range(len(x))]
     C = [y[i][1] for i in range(len(x))]
     x, V, C = np.array(x), np.array(V), np.array(C)
     return x, V, C
 
 
-def plot_CU_diagram(solutions, params: PhysicalParams, lmb=None):
+def profile_plot(solutions, params: PhysicalParams, lmb, show=True):
+    init_styled_plot()
+    fig, axes = plt.subplots(2, 1)
+    for x, V, C in solutions:
+        axes[0].plot(x, -V)
+        axes[1].plot(x, C)
+    for ax in axes:
+        ax.set_xlabel('x')
+    axes[0].set_ylabel('U')
+    axes[1].set_ylabel('C')
+    finish_styled_plot()
+    if show:
+        plt.show()
+
+
+def plot_CU_diagram(solutions, params: PhysicalParams, lmb=None, show=True):
     omega, gamma, s, n = params.omega, params.gamma, params.s, params.n
     init_styled_plot()
     fig, ax = plt.subplots(1, 1)
@@ -77,7 +95,8 @@ def plot_CU_diagram(solutions, params: PhysicalParams, lmb=None):
     ttl = rf's={s}, n={n}, $\gamma$={gamma_str}, $\omega$={omega}, $\lambda$={lmb}'
     plt.title(ttl)
     finish_styled_plot()
-    plt.show()
+    if show:
+        plt.show()
 
 
 def read_input():
@@ -90,8 +109,9 @@ def read_input():
                     help='s = 1 for diverging, s = -1 for converging')
     ap.add_argument('-n', type=int, default=0, metavar='geometry',
                     help='n = 0 - plane, n = 1 - cylinder, n = 2 - sphere')
+    ap.add_argument('-p', '--profileplot', action='store_true')
     args = ap.parse_args()
-    return PhysicalParams(omega=args.omega, gamma=args.gamma, s=args.s, n=args.n)
+    return PhysicalParams(omega=args.omega, gamma=args.gamma, s=args.s, n=args.n), args.profileplot
 
 
 if __name__ == '__main__':

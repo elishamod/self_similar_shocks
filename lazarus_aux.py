@@ -118,9 +118,19 @@ def solve_from_sonic(n, gamma, lmb, omega=0.0, s=-1, x_plus=0.5, prec=1e-7, max_
     # x = np.array([z for z in reversed(x)] + list(x2))
     # y = np.array([z for z in reversed(y)] + list(y2))
 
-    x_start = 1.0 * np.sign(lmb * s)
-    x_end = x_start * 1e1 ** np.sign(-lmb * s)
-    x, y = rk.rk4(foo, x_start, x_end, np.array([-Us - dUdC * dC, Cs + dC]), prec, max_n=max_n)
+    x1_start = 1.0 * np.sign(lmb * s)
+    x1_end = x1_start * 1e1 ** np.sign(-lmb * s)
+    x1, y1 = rk.rk4(foo, x1_start, x1_end, np.array([-Us - dUdC * dC, Cs + dC]), prec, max_n=max_n)
+    shock_ind = find_closest_to_point(y1, strong_shock_point(gamma))
+    x1 = [-xp / x1[shock_ind] for xp in x1[:shock_ind + 1]]
+    y1 = y1[:shock_ind + 1]
+    x1, y1 = x1[-1::-1], y1[-1::-1]
+
+    x2_start = x1[-1] + (x1[-1] - x1[-2]) * dC / (y1[-1][1] - y1[-2][1])
+    y2_start = np.array([-Us + dUdC * dC, Cs - dC])
+    x2, y2 = rk.rk4(foo, x2_start, 1.0, y2_start, prec, max_n=max_n)
+
+    x, y = x1 + x2, y1 + y2
     return x, y
 
 
@@ -131,3 +141,17 @@ def sonic_point_C(n, gamma, lmb, omega=0.0):
         h = 0.5 - (omega + (gamma - 2) * (1 - lmb)) / (2 * n * gamma)
         Cs = h + np.array([1, -1]) * np.sqrt(h ** 2 + (1 - lmb) / n)
     return Cs
+
+
+def strong_shock_point(gamma):
+    return [-2 / (gamma + 1), np.sqrt(2 * gamma * (gamma - 1)) / (gamma + 1)]
+
+
+def find_closest_to_point(y_set, y_point):
+    min_dist, closest_ind = np.inf, None
+    for i in range(len(y_set)):
+        curr_dist = (y_set[i][0] - y_point[0]) ** 2 + (y_set[i][1] - y_point[1]) ** 2
+        if curr_dist < min_dist:
+            min_dist = curr_dist
+            closest_ind = i
+    return closest_ind

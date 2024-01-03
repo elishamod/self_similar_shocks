@@ -95,30 +95,13 @@ def solve_eta(gamma, eta, x_end=1e4, prec1=1e-4, prec2=1e-6, switch=True):
 
 def solve_from_sonic(n, gamma, lmb, omega=0.0, s=-1, x_plus=0.5, prec=1e-7, max_n=1000):
     foo = lambda xw, yw: func(yw, xw, lmb, n, gamma, omega)
-    Um1, Cm1 = 2. / (gamma + 1), np.sqrt(2 * gamma * (gamma - 1)) / (gamma + 1)
-    aux = 3 - lmb + (omega + 2 * (lmb - 1)) / gamma
-    # Us = 0.25 * (aux - np.sqrt(aux ** 2 - 8 * (omega + 2 * (lmb - 1)) / gamma))
-    # Cs = 1 - Us
     Cs = sonic_point_C(n, gamma, lmb, omega)
     if isinstance(Cs, Iterable):
         Cs = Cs[-1]
     Us = 1 - Cs
 
-    dD1dU = -(n + 1) * Cs ** 2 + (1 - Us) * (lmb - Us) - Us * (lmb - Us) - Us * (1 - Us)
-    dD1dC = ((omega + 2 * (lmb - 1)) / gamma - (n + 1) * Us) * 2 * Cs
-    dD2dU = (2 * (Us - 1) - 0.5 * n * (gamma - 1) * (1 - 2 * Us) + (lmb - 1) * (gamma - 3) / 2) * Cs
-    dD2dU -= (2 * (lmb - 1) - (gamma - 1) * omega) / (2 * gamma * (1 - Us) ** 2) * Cs ** 3
-    dD2dC = (1 - Us) ** 2 - 0.5 * n * (gamma - 1) * Us * (1 - Us) + (lmb - 1) * ((gamma - 3) * Us / 2 + 1)
-    dD2dC -= (1 + (2 * (lmb - 1) - (gamma - 1) * omega) / (2 * gamma * (1 - Us))) * 3 * Cs ** 2
-    A, B, C = dD2dU, dD2dC - dD1dU, -dD1dC
-    dUdC = (-B - np.sqrt(B ** 2 - 4 * A * C)) / (2 * A)
+    dUdC = get_dUdC(Us, Cs, n, gamma, lmb, omega)
     dC = 1e-6
-
-    # x_start = -1.0
-    # x, y = rk.rk4(foo, x_start + x_plus, x_start, np.array([-Us-dUdC*dC, Cs+dC]), prec, max_n=max_n)
-    # x2, y2 = rk.rk4(foo, -x_start + 1e1, -x_start, np.array([-Us+dUdC*dC, Cs-dC]), prec, max_n=max_n)
-    # x = np.array([z for z in reversed(x)] + list(x2))
-    # y = np.array([z for z in reversed(y)] + list(y2))
 
     x1_start = 1.0 * np.sign(lmb * s)
     x1_end = x1_start * 1e1 ** np.sign(-lmb * s)
@@ -134,6 +117,22 @@ def solve_from_sonic(n, gamma, lmb, omega=0.0, s=-1, x_plus=0.5, prec=1e-7, max_
 
     x, y = x1 + x2, y1 + y2
     return x, y
+
+
+def get_dUdC(Us, Cs, n, gamma, lmb, omega=0.0):
+    dD1dU = -(n + 1) * Cs ** 2 + (1 - Us) * (lmb - Us) - Us * (lmb - Us) - Us * (1 - Us)
+    dD1dC = ((omega + 2 * (lmb - 1)) / gamma - (n + 1) * Us) * 2 * Cs
+    dD2dU = (2 * (Us - 1) - 0.5 * n * (gamma - 1) * (1 - 2 * Us) + (lmb - 1) * (gamma - 3) / 2) * Cs
+    dD2dU -= (2 * (lmb - 1) - (gamma - 1) * omega) / (2 * gamma * (1 - Us) ** 2) * Cs ** 3
+    dD2dC = (1 - Us) ** 2 - 0.5 * n * (gamma - 1) * Us * (1 - Us) + (lmb - 1) * ((gamma - 3) * Us / 2 + 1)
+    dD2dC -= (1 + (2 * (lmb - 1) - (gamma - 1) * omega) / (2 * gamma * (1 - Us))) * 3 * Cs ** 2
+    A, B, C = dD2dU, dD2dC - dD1dU, -dD1dC
+    discriminant = np.sqrt(B ** 2 - 4 * A * C)
+    dUdC = (-B + np.array([-1, 1]) * discriminant) / (2 * A)
+    Vshock, Cshock = strong_shock_point(gamma)
+    sonic_to_shock_dUdC = (-Vshock - Us) / (Cshock - Cs)
+    correct_ind = np.argmin(np.abs((dUdC - sonic_to_shock_dUdC) / (dUdC + sonic_to_shock_dUdC)))
+    return dUdC[correct_ind]
 
 
 def sonic_point_C(n, gamma, lmb, omega=0.0):

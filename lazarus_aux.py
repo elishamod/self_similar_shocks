@@ -103,13 +103,15 @@ def solve_from_sonic(n, gamma, lmb, omega=0.0, s=-1, x_plus=0.5, prec=1e-7, max_
     if isinstance(Cs, Iterable):
         Cs = Cs[-1]
     Us = 1 - Cs
-    A1 = ((omega + 2 * (lmb - 1)) / gamma - 3 * Us) * 2 * Cs
-    B1 = -3 * Cs ** 2 + 3 * Us ** 2 - 2 * (lmb + 1) * Us + lmb
-    aux = (2 * (lmb - 1) - (gamma - 1) * omega) / (2 * gamma)
-    A2 = -2 * Cs ** 2 - 0.5 * n * (gamma - 1) * Us * Cs + (lmb - 1) * (0.5 * (gamma - 3) * Us + 1) - 3 * Cs * aux
-    B2 = (-2 * Cs - 0.5 * n * (gamma - 1) * (1 - 2 * Us) + (lmb - 1) * (gamma - 3) / 2 - aux) * Cs
-    dUdC = (B1 - A2 + np.sqrt((A2 - B1) ** 2 + 4 * A1 * B2)) / (2 * B2)
-    dUdC = -dUdC        # dubious...
+
+    dD1dU = -(n + 1) * Cs ** 2 + (1 - Us) * (lmb - Us) - Us * (lmb - Us) - Us * (1 - Us)
+    dD1dC = ((omega + 2 * (lmb - 1)) / gamma - (n + 1) * Us) * 2 * Cs
+    dD2dU = (2 * (Us - 1) - 0.5 * n * (gamma - 1) * (1 - 2 * Us) + (lmb - 1) * (gamma - 3) / 2) * Cs
+    dD2dU += (2 * (lmb - 1) - (gamma - 1) * omega) / (2 * gamma * (1 - Us) ** 2) * Cs ** 3
+    dD2dC = (1 - Us) ** 2 - 0.5 * n * (gamma - 1) * Us * (1 - Us) + (lmb - 1) * ((gamma - 3) * Us / 2 + 1)
+    dD2dC -= (1 + (2 * (lmb - 1) - (gamma - 1) * omega) / (2 * gamma * (1 - Us))) * 3 * Cs ** 2
+    A, B, C = dD2dU, dD2dC - dD1dU, -dD1dC
+    dUdC = (-B + np.sqrt(B ** 2 - 4 * A * C)) / (2 * A)
     dC = 1e-6
 
     # x_start = -1.0

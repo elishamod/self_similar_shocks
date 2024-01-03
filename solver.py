@@ -1,4 +1,7 @@
-"""A tool that tries to find the self-similar solution automatically"""
+"""
+A tool that tries to find the self-similar solution automatically.
+Use -h to get help.
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 from utils import get_parser, init_styled_plot, finish_styled_plot
@@ -8,12 +11,16 @@ PhysicalParams = namedtuple('PhysicalParams', ['omega', 'gamma', 'n', 's'])
 
 
 def main():
-    params, profile_plot_flag = read_input()
-    lmb_guess = lambda_initial_guess(params)
-    sol = solve_given_lambda(params, lmb_guess)
-    plot_CU_diagram([sol], params=params, lmb=lmb_guess, show=False)
+    params, user_lmb, profile_plot_flag = read_input()
+    if user_lmb is None:
+        lmb = lambda_initial_guess(params)
+        sol = solve_given_lambda(params, lmb)
+    else:
+        lmb = user_lmb
+        sol = solve_given_lambda(params, lmb)
+    plot_CU_diagram([sol], params=params, lmb=lmb, show=False)
     if profile_plot_flag:
-        profile_plot([sol], params=params, lmb=lmb_guess, show=False)
+        profile_plot([sol], params=params, lmb=lmb, show=False)
     plt.show()
 
 
@@ -110,8 +117,10 @@ def read_input():
     ap.add_argument('-n', type=int, default=0, metavar='geometry',
                     help='n = 0 - plane, n = 1 - cylinder, n = 2 - sphere')
     ap.add_argument('-p', '--profileplot', action='store_true')
+    ap.add_argument('-l', '--lambda', type=float, default=None, dest='lmb',
+                    help='specify a specific lambda and do not look for a solution automatically')
     args = ap.parse_args()
-    return PhysicalParams(omega=args.omega, gamma=args.gamma, s=args.s, n=args.n), args.profileplot
+    return PhysicalParams(omega=args.omega, gamma=args.gamma, s=args.s, n=args.n), args.lmb, args.profileplot
 
 
 if __name__ == '__main__':

@@ -4,27 +4,28 @@ import lazarus_aux as lz
 from os import mkdir
 from utils import init_styled_plot, finish_styled_plot
 
-n = 2
-gamma = 5./3.
-omega = 2.1
-lmb = 0.810136
+n = 1
+omega = 0.0
+# B_err is the (erroneous) value that appears in lazarus1981, tables 6.4 and 6.5
+gamma, lmb, B_err = 5/3., 1.2260537880, .423698
+# to get B we need to fix B_err according to the erratum lazarus1982
+B = B_err * (gamma + 1) / (gamma - 1)
 reflection = True
-
-plot_bv = False
+plot_bv = True
 plot_profiles = False
 save_results = False
 
+x, y = lz.solve1(n, gamma, lmb, omega, prec1=1e-4, x_end=B, prec2=1e-7, switch=reflection)
 # x, y = lz.solve_from_sonic(n, gamma, lmb, omega, 0.33875)
 # x, y = lz.solve1(n, gamma, lmb, omega, prec1=1e-3, x_end=1e2, prec2=1e-7, switch=reflection)
 # x, y = lz.solve1(n, gamma, lmb, omega, prec1=1e-4, x_end=0.92184, prec2=1e-7, switch=reflection)
-x, y = lz.solve1(n, gamma, lmb, omega, prec1=1e-4, x_end=3.9298, prec2=1e-7, switch=reflection)
-
-init_styled_plot()
 
 V = [y[i][0] for i in range(len(x))]
 C = [y[i][1] for i in range(len(x))]
+# print(len(C))
 x, V, C = np.array(x), np.array(V), np.array(C)
-print(len(C))
+mach = (1 + abs(V[-1])) / abs(C[-1])
+# print(mach)
 
 xc, yc = lz.solve1cont(n, gamma, lmb, omega, y[-1], x[-1], 1e1)
 Vc = [yc[i][0] for i in range(len(xc))]
@@ -45,7 +46,7 @@ if plot_bv:
     w, yr = lz.solve2(n, gamma, lmb, omega, w_end=0.6241, prec=1e-3)
     Vr = np.array([yr[i][0] for i in range(len(w))])
     Cr = np.array([yr[i][1] for i in range(len(w))])
-    print(len(Cr))
+    # print(len(Cr))
 
     wc, yrc = lz.solve2cont(n, gamma, lmb, omega, yr[-1], w[-1], 1e4, prec=1e-2)
     Vrc = np.array([yrc[i][0] for i in range(len(wc))])
@@ -55,6 +56,7 @@ s = 1
 if reflection ^ (lmb < 0):
     s = -1
 
+init_styled_plot()
 # plt.rcParams["font.family"] = "Times New Roman"
 plt.rc('axes', labelsize=16)
 plt.rc('xtick', labelsize=15)
@@ -100,8 +102,8 @@ plt.title(ttl)
 plt.xlabel('U')
 plt.ylabel('C')
 plt.grid(True)
-plt.ylim(0, 1)
-plt.xlim(0, 1)
+plt.ylim(-2, 1)
+plt.xlim(-0.5, 1)
 # plt.legend()
 finish_styled_plot()
 plt.show()

@@ -76,8 +76,8 @@ def CBC(CB):
 
 def init_styled_plot(tex=False, cmap='tab20', font_type='David'):
     import warnings
-    from matplotlib.mathtext import MathTextWarning
-    warnings.filterwarnings('ignore', category=MathTextWarning)
+    # from matplotlib.mathtext import MathTextWarning
+    # warnings.filterwarnings('ignore', category=MathTextWarning)
     for attr, val in styled_plots(tex=tex, cmap=cmap, font_type=font_type).items():
         plt.rcParams[attr] = val
     return

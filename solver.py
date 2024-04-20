@@ -18,7 +18,7 @@ def main():
     else:
         lmb = user_lmb
         sol = solve_given_lambda(params, lmb)
-    plot_CU_diagram([sol], params=params, lmb=lmb, show=False)
+    plot_UC_diagram([sol], params=params, lmb=lmb, show=False)
     if profile_plot_flag:
         profile_plot([sol], params=params, lmb=lmb, show=False)
     plt.show()
@@ -81,7 +81,7 @@ def profile_plot(solutions, params: PhysicalParams, lmb, show=True):
         plt.show()
 
 
-def plot_CU_diagram(solutions, params: PhysicalParams, lmb=None, show=True):
+def plot_UC_diagram(solutions, params: PhysicalParams, lmb=None, show=True):
     omega, gamma, s, n = params.omega, params.gamma, params.s, params.n
     init_styled_plot()
     fig, ax = plt.subplots(1, 1)
@@ -94,8 +94,10 @@ def plot_CU_diagram(solutions, params: PhysicalParams, lmb=None, show=True):
     if lmb is not None:
         Cs = lz.sonic_point_C(n=n, gamma=gamma, lmb=lmb, omega=omega)
         ax.plot(1 - Cs, Cs, 'g*', markersize=8, label='Singular point')
-    ax.set_xlabel('C')
-    ax.set_ylabel('U')
+    ax.plot(0, 0, 'k.', markersize=8, label='_origin')
+    set_UC_diagram_axes_limits(ax, solutions)
+    ax.set_xlabel('U')
+    ax.set_ylabel('C')
     gamma_str = str(gamma)
     if gamma == 5. / 3.:
         gamma_str = '5/3'
@@ -104,6 +106,21 @@ def plot_CU_diagram(solutions, params: PhysicalParams, lmb=None, show=True):
     finish_styled_plot()
     if show:
         plt.show()
+
+
+def set_UC_diagram_axes_limits(ax, solutions):
+    xmin, xmax = 0.0, 1.0
+    ymin, ymax = 0.0, 1.0
+    for _, V, C in solutions:
+        x_vec, y_vec = -V, C
+        x_vec_min_trunc = 0.5 * np.floor(2 * min(x_vec))
+        y_vec_min_trunc = 0.5 * np.floor(2 * min(y_vec))
+        y_vec_max_trunc = 0.5 * np.ceil(2 * max(y_vec))
+        xmin = max(-1.5, min(xmin, x_vec_min_trunc))
+        ymin = max(-1.5, min(ymin, y_vec_min_trunc))
+        xmax = min(1.5, max(ymax, y_vec_max_trunc))
+    ax.set_xlim(xmin, xmax)
+    ax.set_ylim(ymin, ymax)
 
 
 def read_input():

@@ -95,9 +95,7 @@ def solve_eta(gamma, eta, x_end=1e4, prec1=1e-4, prec2=1e-6, switch=True):
 
 def solve_from_sonic(n, gamma, lmb, omega=0.0, s=-1, x_plus=0.5, prec=1e-7, max_n=1000):
     foo = lambda xw, yw: func(yw, xw, lmb, n, gamma, omega)
-    Cs = sonic_point_C(n, gamma, lmb, omega)
-    if isinstance(Cs, Iterable):
-        Cs = Cs[-1]
+    Cs = sonic_point_C(n, gamma, lmb, omega, guess_correct_point=True)
     Us = 1 - Cs
 
     dUdC = get_dUdC(Us, Cs, n, gamma, lmb, omega)
@@ -107,13 +105,17 @@ def solve_from_sonic(n, gamma, lmb, omega=0.0, s=-1, x_plus=0.5, prec=1e-7, max_
     x1_end = x1_start * 1e1 ** np.sign(-lmb * s)
     x1, y1 = rk.rk4(foo, x1_start, x1_end, np.array([-Us - dUdC * dC, Cs + dC]), prec, max_n=max_n)
     shock_ind = find_closest_to_point(y1, strong_shock_point(gamma))
-    x1 = [-xp / x1[shock_ind] for xp in x1[:shock_ind + 1]]
+    x1 = [np.sign(lmb * s) * xp / x1[shock_ind] for xp in x1[:shock_ind + 1]]
     y1 = y1[:shock_ind + 1]
     x1, y1 = x1[-1::-1], y1[-1::-1]
 
     x2_start = x1[-1] + (x1[-1] - x1[-2]) * dC / (y1[-1][1] - y1[-2][1])
     y2_start = np.array([-Us + dUdC * dC, Cs - dC])
-    x2, y2 = rk.rk4(foo, x2_start, 1.0, y2_start, prec, max_n=max_n)
+    if lmb * s > 0:
+        x2_end = 10 * x2_start
+    else:
+        x2_end = 1.0
+    x2, y2 = rk.rk4(foo, x2_start, x2_end, y2_start, prec, max_n=max_n)
 
     x, y = x1 + x2, y1 + y2
     return x, y
@@ -126,6 +128,7 @@ def get_dUdC(Us, Cs, n, gamma, lmb, omega=0.0):
     dD2dU -= (2 * (lmb - 1) - (gamma - 1) * omega) / (2 * gamma * (1 - Us) ** 2) * Cs ** 3
     dD2dC = (1 - Us) ** 2 - 0.5 * n * (gamma - 1) * Us * (1 - Us) + (lmb - 1) * ((gamma - 3) * Us / 2 + 1)
     dD2dC -= (1 + (2 * (lmb - 1) - (gamma - 1) * omega) / (2 * gamma * (1 - Us))) * 3 * Cs ** 2
+    # A * (dU/dC)**2 + B * dU/dC + C = 0
     A, B, C = dD2dU, dD2dC - dD1dU, -dD1dC
     discriminant = np.sqrt(B ** 2 - 4 * A * C)
     dUdC = (-B + np.array([-1, 1]) * discriminant) / (2 * A)
@@ -135,12 +138,15 @@ def get_dUdC(Us, Cs, n, gamma, lmb, omega=0.0):
     return dUdC[correct_ind]
 
 
-def sonic_point_C(n, gamma, lmb, omega=0.0):
+def sonic_point_C(n, gamma, lmb, omega=0.0, guess_correct_point=False):
     if n == 0:
         Cs = gamma * (1 - lmb) / (omega + (gamma - 2) * (1 - lmb))
     else:
         h = 0.5 - (omega + (gamma - 2) * (1 - lmb)) / (2 * n * gamma)
         Cs = h + np.array([1, -1]) * np.sqrt(h ** 2 + (1 - lmb) / n)
+        if guess_correct_point:
+            probably_correct_index = find_closest_to_point([(ccc - 1, ccc) for ccc in Cs], strong_shock_point(gamma))
+            Cs = Cs[probably_correct_index]
     return Cs
 
 

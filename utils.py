@@ -74,7 +74,7 @@ def CBC(CB):
     return np.take(CB_colors, CB)
 
 
-def init_styled_plot(tex=False, cmap='tab20', font_type='David'):
+def init_styled_plot(tex=False, cmap='tab20', font_type='STIXGeneral'):
     import warnings
     # from matplotlib.mathtext import MathTextWarning
     # warnings.filterwarnings('ignore', category=MathTextWarning)
@@ -83,7 +83,7 @@ def init_styled_plot(tex=False, cmap='tab20', font_type='David'):
     return
 
 
-def styled_plots(tex=False, cmap='tab20', font_type='David'):
+def styled_plots(tex=False, cmap='tab20', font_type='STIXGeneral'):
     """
     This function returns a dictionary of rcParams to change the plot to look like matlab's.
     This function works better with finish_styled_plots().
@@ -97,13 +97,12 @@ def styled_plots(tex=False, cmap='tab20', font_type='David'):
                                           r'\usepackage[T1]{fontenc}'
     plt.rcParams['font.family'] = font_type
     plt.rcParams['axes.prop_cycle'] = plt.cycler(color=plt.cm.get_cmap(cmap).colors)
-
     return {
         'text.usetex': tex,
         'font.family': font_type,
         'font.serif': font_type,
 
-        'mathtext.fontset': 'custom',
+        'mathtext.fontset': 'cm',
         'mathtext.cal': font_type,
         'mathtext.bf': font_type,
         'mathtext.it': font_type,

@@ -67,7 +67,7 @@ def solve_given_lambda(params: PhysicalParams, lmb):
 
 
 def profile_plot(solutions, params: PhysicalParams, lmb, show=True):
-    init_styled_plot()
+    init_styled_plot(font_type='David')
     fig, axes = plt.subplots(2, 1)
     for x, V, C in solutions:
         axes[0].plot(x, -V)
@@ -83,7 +83,7 @@ def profile_plot(solutions, params: PhysicalParams, lmb, show=True):
 
 def plot_UC_diagram(solutions, params: PhysicalParams, lmb=None, show=True):
     omega, gamma, s, n = params.omega, params.gamma, params.s, params.n
-    init_styled_plot()
+    init_styled_plot(font_type='David')
     fig, ax = plt.subplots(1, 1)
     vvv = np.linspace(-1.0, 0.0, 10)
     ax.plot(-vvv, 1 + vvv, label='Sonic line', color='C1')

@@ -122,6 +122,7 @@ def solve_from_sonic(n, gamma, lmb, omega=0.0, s=-1, x_plus=0.5, prec=1e-7, max_
 
 
 def get_dUdC(Us, Cs, n, gamma, lmb, omega=0.0):
+    """Returns dU/dC at the sonic point"""
     dD1dU = -(n + 1) * Cs ** 2 + (1 - Us) * (lmb - Us) - Us * (lmb - Us) - Us * (1 - Us)
     dD1dC = ((omega + 2 * (lmb - 1)) / gamma - (n + 1) * Us) * 2 * Cs
     dD2dU = (2 * (Us - 1) - 0.5 * n * (gamma - 1) * (1 - 2 * Us) + (lmb - 1) * (gamma - 3) / 2) * Cs
@@ -133,8 +134,9 @@ def get_dUdC(Us, Cs, n, gamma, lmb, omega=0.0):
     discriminant = np.sqrt(B ** 2 - 4 * A * C)
     dUdC = (-B + np.array([-1, 1]) * discriminant) / (2 * A)
     Vshock, Cshock = strong_shock_point(gamma)
-    sonic_to_shock_dUdC = (-Vshock - Us) / (Cshock - Cs)
-    correct_ind = np.argmin(np.abs((dUdC - sonic_to_shock_dUdC) / (dUdC + sonic_to_shock_dUdC)))
+    sonic_to_shock_angle = np.arctan((-Vshock - Us) / (Cshock - Cs))
+    sol_line_angle = np.arctan(dUdC)
+    correct_ind = np.argmin(np.abs(sonic_to_shock_angle - sol_line_angle))
     return dUdC[correct_ind]
 
 

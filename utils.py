@@ -96,7 +96,7 @@ def styled_plots(tex=False, cmap='tab20', font_type='STIXGeneral'):
                                           r'\usepackage{bm}' \
                                           r'\usepackage[T1]{fontenc}'
     plt.rcParams['font.family'] = font_type
-    plt.rcParams['axes.prop_cycle'] = plt.cycler(color=plt.cm.get_cmap(cmap).colors)
+    plt.rcParams['axes.prop_cycle'] = plt.cycler(color=plt.get_cmap(cmap).colors)
     return {
         'text.usetex': tex,
         'font.family': font_type,
